@@ -15,7 +15,7 @@ jobs:
   build:
     strategy:
       matrix:
-        command: ${{ fromJSON(toJSON(inputs.commands)) }}
+        command: ${{ fromJSON(inputs.commands) }}
     runs-on: ubuntu-latest
     steps:
       - name: Setup Nix
