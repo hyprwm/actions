@@ -5,15 +5,18 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # Takes about 4 seconds
     - name: Install Nix
-      uses: nixbuild/nix-quick-install-action@v31
+      uses: cachix/install-nix-action@v31
       with:
-        nix_conf: |
+        extra_nix_config: |
           keep-env-derivations = true
           keep-outputs = true
 
+    # This will take most of the step time
+    # Reuses downloaded packages from previous CI runs
     - name: Restore and save Nix store
-      uses: nix-community/cache-nix-action@v6
+      uses: nix-community/cache-nix-action@v7
       with:
         # restore and save a cache using this key (per job)
         primary-key: nix-${{ runner.os }}-${{ github.job }}
@@ -23,7 +26,8 @@ runs:
         # before trying to save a new cache
         gc-max-store-size-linux: 5G
 
-    - uses: cachix/cachix-action@v15
+    # Optionally pushes to cachix if the token is present
+    - uses: cachix/cachix-action@v17
       with:
         name: hyprland
         authToken: ${{ inputs.CACHIX_AUTH_TOKEN }}
