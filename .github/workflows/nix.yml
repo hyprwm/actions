@@ -7,6 +7,16 @@ on:
         required: true
         type: string
         description: Command to run
+      checkout:
+        required: false
+        type: boolean
+        default: true
+        description: Whether to check out the caller repository before running the command
+      submodules:
+        required: false
+        type: string
+        default: "false"
+        description: actions/checkout submodules mode, e.g. false or recursive
     secrets:
       CACHIX_AUTH_TOKEN:
         required: false
@@ -15,27 +25,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Nix
-        uses: nixbuild/nix-quick-install-action@v31
+      - name: Checkout
+        if: inputs.checkout
+        uses: actions/checkout@v4
         with:
-          nix_conf: |
-            keep-env-derivations = true
-            keep-outputs = true
+          submodules: ${{ inputs.submodules }}
 
-      - name: Restore and save Nix store
-        uses: nix-community/cache-nix-action@v6
-        with:
-          # restore and save a cache using this key (per job)
-          primary-key: nix-${{ runner.os }}-${{ github.job }}
-          # if there's no cache hit, restore a cache by this prefix
-          restore-prefixes-first-match: nix-${{ runner.os }}
-          # collect garbage until the Nix store size (in bytes) is at most this number
-          # before trying to save a new cache
-          gc-max-store-size-linux: 5G
-
-      - uses: cachix/cachix-action@v15
-        with:
-          name: hyprland
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - name: Set up Nix
+        uses: hyprwm/actions/nix-setup@main
 
       - run: ${{ inputs.command }}
